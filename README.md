@@ -1,2 +1,2 @@
 # go-prom
-Prometheus helper for go web services
+Prometheus helper for go web services using httprouter
