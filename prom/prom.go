@@ -2,6 +2,7 @@ package prom
 
 import (
 	"net/http"
+	"runtime"
 	"strings"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 )
 
 var (
-	requestCount   = initRequestCount("http", "request_count", "Http Request counts for all endpoints")
+	goroutineCount = initGoroutineTracker("go", "goroutine", "Number of goroutines")
 	requestTime    = initHttpTime("http", "response_time", "Http Request response time for all endpoints")
 	dependencyTime = initDependencyTime("dependancy", "response_time", "Response time for all dependancies")
 )
@@ -45,15 +46,25 @@ func initDependencyTime(namespace, name, help string) *prometheus.SummaryVec {
 	return summary
 }
 
-func initRequestCount(namespace, name, help string) *prometheus.CounterVec {
-	counter := prometheus.NewCounterVec(prometheus.CounterOpts{
+func initGoroutineTracker(namespace, name, help string) prometheus.Gauge {
+	gauge := prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      name,
 		Help:      help,
-	}, []string{"status_class", "request", "method"})
+	})
 
-	prometheus.MustRegister(counter)
-	return counter
+	prometheus.MustRegister(gauge)
+	return gauge
+}
+
+func init() {
+	// Update go routine count every one second
+	go func() {
+		for {
+			goroutineCount.Set(float64(runtime.NumGoroutine()))
+			time.Sleep(1 * time.Second)
+		}
+	}()
 }
 
 // This is to track any dependency of an API. Eg. Third party
@@ -78,19 +89,14 @@ func Track(h Handle) httprouter.Handle {
 		switch {
 		case status >= 500:
 			requestTime.WithLabelValues("5xx", req, method).Observe(float64(time.Since(st).Seconds()))
-			requestCount.WithLabelValues("5xx", req, method).Inc()
 		case status >= 400:
 			requestTime.WithLabelValues("4xx", req, method).Observe(float64(time.Since(st).Seconds()))
-			requestCount.WithLabelValues("4xx", req, method).Inc()
 		case status >= 300:
 			requestTime.WithLabelValues("3xx", req, method).Observe(float64(time.Since(st).Seconds()))
-			requestCount.WithLabelValues("3xx", req, method).Inc()
 		case status >= 200:
 			requestTime.WithLabelValues("2xx", req, method).Observe(float64(time.Since(st).Seconds()))
-			requestCount.WithLabelValues("2xx", req, method).Inc()
 		default:
 			requestTime.WithLabelValues("2xx", req, method).Observe(float64(time.Since(st).Seconds()))
-			requestCount.WithLabelValues("2xx", req, method).Inc()
 		}
 	}
 }
