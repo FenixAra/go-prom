@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	requestCount   = initRequestCount("http", "request_count", "Http Request counts for all endpoints")
 	requestTime    = initHttpTime("http", "response_time", "Http Request response time for all endpoints")
 	dependencyTime = initDependencyTime("dependancy", "response_time", "Response time for all dependancies")
 )
@@ -44,6 +45,17 @@ func initDependencyTime(namespace, name, help string) *prometheus.SummaryVec {
 	return summary
 }
 
+func initRequestCount(namespace, name, help string) *prometheus.CounterVec {
+	counter := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Name:      name,
+		Help:      help,
+	}, []string{"status_class", "request", "method"})
+
+	prometheus.MustRegister(counter)
+	return counter
+}
+
 // This is to track any dependency of an API. Eg. Third party
 // http request or Database/Redis call
 func TrackDependency(dep, req, status string, v float64) {
@@ -66,14 +78,19 @@ func Track(h Handle) httprouter.Handle {
 		switch {
 		case status >= 500:
 			requestTime.WithLabelValues("5xx", req, method).Observe(float64(time.Since(st).Seconds()))
+			requestCount.WithLabelValues("5xx", req, method).Inc()
 		case status >= 400:
 			requestTime.WithLabelValues("4xx", req, method).Observe(float64(time.Since(st).Seconds()))
+			requestCount.WithLabelValues("4xx", req, method).Inc()
 		case status >= 300:
 			requestTime.WithLabelValues("3xx", req, method).Observe(float64(time.Since(st).Seconds()))
+			requestCount.WithLabelValues("3xx", req, method).Inc()
 		case status >= 200:
 			requestTime.WithLabelValues("2xx", req, method).Observe(float64(time.Since(st).Seconds()))
+			requestCount.WithLabelValues("2xx", req, method).Inc()
 		default:
 			requestTime.WithLabelValues("2xx", req, method).Observe(float64(time.Since(st).Seconds()))
+			requestCount.WithLabelValues("2xx", req, method).Inc()
 		}
 	}
 }
