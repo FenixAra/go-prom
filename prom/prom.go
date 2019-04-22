@@ -17,11 +17,17 @@ var (
 )
 
 type Handle func(http.ResponseWriter, *http.Request, httprouter.Params) int
+type Func func(name, depType string, v interface{}) (interface{}, error)
 
 const (
 	DependencyHTTP  = "HTTP"
 	DependencyRedis = "Redis"
 	DependencyDB    = "DB"
+)
+
+var (
+	StatusSuccess = "Success"
+	StatusFailed  = "Failed"
 )
 
 func initHttpTime(namespace, name, help string) *prometheus.SummaryVec {
@@ -99,4 +105,19 @@ func Track(h Handle) httprouter.Handle {
 			requestTime.WithLabelValues("2xx", req, method).Observe(float64(time.Since(st).Seconds()))
 		}
 	}
+}
+
+// TrackFuck is a wrapper/closure over any dependancy functions (Database, third party
+// HTTP calls, Redis etc). It publishes dependency response time metrics to prometheus's
+// /metrics
+func TrackFunc(name, depType string, v interface{}, f Func) (interface{}, error) {
+	st := time.Now()
+	status := StatusSuccess
+	res, err := f(name, depType, v)
+	if err != nil {
+		status = StatusFailed
+	}
+
+	dependencyTime.WithLabelValues(depType, name, status).Observe(float64(time.Since(st).Seconds()))
+	return res, err
 }
