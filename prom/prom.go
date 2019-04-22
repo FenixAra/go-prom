@@ -23,6 +23,11 @@ const (
 	DependencyHTTP  = "HTTP"
 	DependencyRedis = "Redis"
 	DependencyDB    = "DB"
+
+	Label5xx = "5xx"
+	Label4xx = "4xx"
+	Label3xx = "3xx"
+	Label2xx = "2xx"
 )
 
 var (
@@ -94,15 +99,15 @@ func Track(h Handle) httprouter.Handle {
 
 		switch {
 		case status >= 500:
-			requestTime.WithLabelValues("5xx", req, method).Observe(float64(time.Since(st).Seconds()))
+			requestTime.WithLabelValues(Label5xx, req, method).Observe(float64(time.Since(st).Seconds()))
 		case status >= 400:
-			requestTime.WithLabelValues("4xx", req, method).Observe(float64(time.Since(st).Seconds()))
+			requestTime.WithLabelValues(Label4xx, req, method).Observe(float64(time.Since(st).Seconds()))
 		case status >= 300:
-			requestTime.WithLabelValues("3xx", req, method).Observe(float64(time.Since(st).Seconds()))
+			requestTime.WithLabelValues(Label3xx, req, method).Observe(float64(time.Since(st).Seconds()))
 		case status >= 200:
-			requestTime.WithLabelValues("2xx", req, method).Observe(float64(time.Since(st).Seconds()))
+			requestTime.WithLabelValues(Label2xx, req, method).Observe(float64(time.Since(st).Seconds()))
 		default:
-			requestTime.WithLabelValues("2xx", req, method).Observe(float64(time.Since(st).Seconds()))
+			requestTime.WithLabelValues(Label2xx, req, method).Observe(float64(time.Since(st).Seconds()))
 		}
 	}
 }
