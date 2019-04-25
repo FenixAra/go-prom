@@ -16,7 +16,7 @@ var (
 )
 
 type Handle func(http.ResponseWriter, *http.Request, httprouter.Params) int
-type Func func(name, depType string, v interface{}) (interface{}, error)
+type Func func(v interface{}) (interface{}, error)
 
 const (
 	DependencyHTTP  = "HTTP"
@@ -112,7 +112,7 @@ func Track(h Handle, name string) httprouter.Handle {
 func TrackFunc(name, depType string, v interface{}, f Func) (interface{}, error) {
 	st := time.Now()
 	status := StatusSuccess
-	res, err := f(name, depType, v)
+	res, err := f(v)
 	if err != nil {
 		status = StatusFailed
 	}
