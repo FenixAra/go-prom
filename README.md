@@ -45,5 +45,6 @@ func main() {
 
 func Ping(w http.ResponseWriter, r *http.Request, _ httprouter.Params) int {
 	rd.w.Write([]byte("pong"))
+	return http.StatusOK
 }
 ```
