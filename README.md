@@ -1,7 +1,7 @@
 # go-prom
 Prometheus helper for go web services using httprouter
 
-[![GoDoc](https://godoc.org/github.com/FenixAra/go-prom?status.svg)](https://godoc.org/github.com/FenixAra/go-prom)
+[![GoDoc](https://godoc.org/github.com/FenixAra/go-prom/prom?status.svg)](https://godoc.org/github.com/FenixAra/go-prom/prom)
 
 To get the latest package: 
 
