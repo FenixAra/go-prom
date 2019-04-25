@@ -2,7 +2,6 @@ package prom
 
 import (
 	"net/http"
-	"runtime"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
@@ -10,7 +9,6 @@ import (
 )
 
 var (
-	goroutineCount = initGoroutineTracker("go", "goroutine", "Number of goroutines")
 	requestTime    = initHttpTime("http", "response_time", "Http Request response time for all endpoints")
 	dependencyTime = initDependencyTime("dependency", "response_time", "Response time for all dependencies")
 )
@@ -54,27 +52,6 @@ func initDependencyTime(namespace, name, help string) *prometheus.SummaryVec {
 
 	prometheus.MustRegister(summary)
 	return summary
-}
-
-func initGoroutineTracker(namespace, name, help string) prometheus.Gauge {
-	gauge := prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Name:      name,
-		Help:      help,
-	})
-
-	prometheus.MustRegister(gauge)
-	return gauge
-}
-
-func init() {
-	// Update go routine count every one second
-	go func() {
-		for {
-			goroutineCount.Set(float64(runtime.NumGoroutine()))
-			time.Sleep(1 * time.Second)
-		}
-	}()
 }
 
 // This is to track any dependency of an API. Eg. Third party
