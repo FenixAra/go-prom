@@ -12,7 +12,7 @@ import (
 var (
 	goroutineCount = initGoroutineTracker("go", "goroutine", "Number of goroutines")
 	requestTime    = initHttpTime("http", "response_time", "Http Request response time for all endpoints")
-	dependencyTime = initDependencyTime("dependancy", "response_time", "Response time for all dependancies")
+	dependencyTime = initDependencyTime("dependency", "response_time", "Response time for all dependencies")
 )
 
 type Handle func(http.ResponseWriter, *http.Request, httprouter.Params) int
@@ -106,7 +106,7 @@ func Track(h Handle, name string) httprouter.Handle {
 	}
 }
 
-// TrackFuck is a wrapper/closure over any dependancy functions (Database, third party
+// TrackFuck is a wrapper/closure over any dependency functions (Database, third party
 // HTTP calls, Redis etc). It publishes dependency response time metrics to prometheus's
 // /metrics
 func TrackFunc(name, depType string, v interface{}, f Func) (interface{}, error) {
