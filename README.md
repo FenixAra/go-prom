@@ -10,7 +10,7 @@ To get the latest package:
 go get -u github.com/FenixAra/go-prom/prom
 ```
 
-## Usage
+## Usage with httprouter
 ```
 package main
 
@@ -46,5 +46,40 @@ func main() {
 func Ping(w http.ResponseWriter, r *http.Request, _ httprouter.Params) int {
 	rd.w.Write([]byte("pong"))
 	return http.StatusOK
+}
+```
+
+## Usage with http.Handler and http.HanderFunc
+
+```
+package main
+
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/FenixAra/go-prom/prom"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+)
+
+type test struct {
+}
+
+func (t *test) ServeHTTP(w http.ResponseWriter, r *http.Request) (string, int) {
+	fmt.Fprintf(w, "Welcome to my website!")
+	return "Test", http.StatusOK
+}
+
+func Test2(w http.ResponseWriter, r *http.Request) (string, int) {
+	fmt.Fprintf(w, "Welcome to my website!")
+	return "Test2", http.StatusInternalServerError
+}
+
+func main() {
+	http.Handle("/metrics", promhttp.Handler())
+	http.Handle("/test", prom.Prom(&test{}))
+	http.Handle("/test2", prom.PromFunc(Test2))
+
+	http.ListenAndServe(":3001", nil)
 }
 ```
